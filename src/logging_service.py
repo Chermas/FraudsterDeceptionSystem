@@ -1,0 +1,109 @@
+import json
+import hashlib
+import os
+
+def generate_conversation_id(sender):
+    """
+    Generate a unique conversation ID based on the sender's email.
+    :param sender: The sender's email.
+    :return: The conversation ID.
+    """
+    # Generate a unique conversation ID based on the sender's email
+        # Create a SHA-256 hash of the email
+    email_hash = hashlib.sha256(sender.encode()).hexdigest()
+    # Return a shortened version if you prefer
+    return email_hash[:12]  # Shorten to the first 10 characters if needed
+
+def create_new_conversation_log(sender):
+    """
+    Create a new conversation log file.
+    """
+    # Create a new conversation log json file with an unique id based on the sender's email
+    conversation_id = generate_conversation_id(sender)
+    conversation_log = {
+        "conversation_id": conversation_id,
+        "sender": sender,
+        "messages": []
+    }
+    if not os.path.exists("../logs"):
+        os.makedirs("../logs")
+
+    with open(f"../logs/{conversation_id}.json", "w") as file:
+        json.dump(conversation_log, file)
+    return conversation_id
+    
+
+def add_to_log(conversation_id, sender, message, timestamp):
+    """
+    Add a message to the conversation log.
+    :param conversation_id: The ID of the conversation.
+    :param sender: The sender of the message.
+    :param message: The message content.
+    :param timestamp: The timestamp of the message.
+    """
+    # Add the message to the conversation log
+    with open(f"/..conversation_logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+
+        conversation_log["messages"].append({"sender": sender, "message": message, "timestamp": timestamp})
+
+    with open(f"/..conversation_logs/{conversation_id}.json", "w") as file:
+        json.dump(conversation_log, file)
+
+
+    
+def get_conversation_log(conversation_id):
+    """
+    Get the conversation log for a given conversation ID.
+    :param conversation_id: The ID of the conversation.
+    :return: The conversation log.
+    """
+    # Get the conversation log for the given conversation ID
+    with open(f"/..conversation_logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+    return conversation_log
+
+def get_system_info():
+    """
+    Get information on the system such as how many total and active conversations.
+    :return: System information.
+    """
+    # Get system information
+    pass
+
+def get_latest_messages(conversation_id, num_messages):
+    """
+    Get the latest messages from a conversation.
+    :param conversation_id: The ID of the conversation.
+    :param num_messages: The number of messages to retrieve.
+    :return: The latest messages.
+    """
+    # Get the latest messages from the conversation
+    pass
+
+def add_honeytoken_id(honeytoken_id, conversation_id):
+    """
+    Add a honeytoken ID to a conversation.
+    :param honeytoken_id: The honeytoken ID.
+    :param conversation_id: The ID of the conversation.
+    """
+    # Add the honeytoken ID to the conversation
+    pass
+
+def get_honeytoken_id(conversation_id):
+    """
+    Get the honeytoken ID associated with a conversation.
+    :param conversation_id: The ID of the conversation.
+    :return: The honeytoken ID.
+    """
+    # Get the honeytoken ID associated with the conversation
+    pass
+
+def add_honeytoken_interaction(honeytoken_id, interaction):
+    """
+    Add an interaction to a honeytoken.
+    :param honeytoken_id: The honeytoken ID.
+    :param interaction: The interaction to add.
+    """
+    # Add the interaction to the honeytoken
+    pass
