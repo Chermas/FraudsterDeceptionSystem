@@ -2,11 +2,13 @@ from __future__ import print_function
 import os
 import base64
 import mimetypes
-import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+
+import re
+from email.utils import parseaddr
 
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -142,6 +144,31 @@ class GmailService:
             print(f'An error occurred: {error}')
             return None
 
+    def get_latest_message_content(self, message):
+        """
+        Extract the latest email content from the full message body and format newlines for JSON.
+        
+        Args:
+            message: The full message content retrieved from Gmail.
+            
+        Returns:
+            A string containing only the new message content, with properly formatted newlines.
+        """
+        # Extract the full body from the message
+        full_body = message.get("full_body", "")
+
+        # Regex to match the start of quoted replies (common patterns like "On [date], [name] wrote:")
+        pattern = r"(On\s.*?wrote:)"
+        split_body = re.split(pattern, full_body, maxsplit=1, flags=re.IGNORECASE)
+
+        # Take only the latest content before the reply section
+        latest_content = split_body[0].strip() if split_body else full_body
+
+        # Replace `\r\n` with actual newlines for readability
+        formatted_content = latest_content.replace("\r\n", "\n")
+
+        return formatted_content
+
     def check_for_new_emails(self, user_id='me', query='is:unread', include_spam=False):
         """
         Check for new unread emails, optionally including spam, and return a list of email details.
@@ -165,14 +192,20 @@ class GmailService:
             for message in messages:
                 msg_id = message['id']
                 msg_details = self.get_message_details(user_id, msg_id)
+
+                # Extract the sender and format it as only the email address
+                raw_sender = next((header['value'] for header in msg_details['payload']['headers'] if header['name'] == 'From'), None)
+                sender_email = parseaddr(raw_sender)[1]  # Extract only the email address
+
+                body = self.get_latest_message_content(msg_details)
                 
                 # Append the email with the full message body
                 new_emails.append({
                     "id": msg_id,
                     "threadId": msg_details.get('threadId'),
-                    "sender": next((header['value'] for header in msg_details['payload']['headers'] if header['name'] == 'From'), None),
+                    "sender": sender_email,
                     "subject": next((header['value'] for header in msg_details['payload']['headers'] if header['name'] == 'Subject'), None),
-                    "body": msg_details.get('full_body'),  # Include the entire message body
+                    "body": body,
                     "timestamp": msg_details.get('internalDate')
                 })
         
@@ -216,18 +249,20 @@ class GmailService:
             return None
 
     # Include the reply_to_message function as defined previously
-    def reply_to_email(self, message, response_text):
+    def reply_to_email(self, email, response_text):
         """
-        Reply to an existing email message in the same thread.
+        Reply to an existing email message in the same thread and mark it as read if successful.
         
         Args:
-            message_id: The ID of the message to reply to.
+            email: Dictionary containing the email details, including "id".
             response_text: The text content for the reply.
             
         Returns:
             The response from the Gmail API if successful, otherwise None.
         """
-        try:           
+        message = self.get_email_from_id(email["id"])
+
+        try:
             thread_id = message['threadId']
             headers = {header['name']: header['value'] for header in message['payload']['headers']}
             message_id_header = headers.get('Message-ID')
@@ -235,6 +270,11 @@ class GmailService:
             
             if not from_email:
                 print("Error: 'From' email address not found in the original message.")
+                return None
+            
+            res = self.mark_as_read('me', email['id'])
+            if res == -1:
+                print("Failed to mark the email as read.")
                 return None
             
             subject = "Re: " + headers.get('Subject', '')
@@ -256,7 +296,22 @@ class GmailService:
             ).execute()
 
             print(f'Reply sent successfully! Message Id: {send_response}')
+
+            print(f'Message {email["id"]} marked as read.')
+
             return send_response
         except Exception as error:
             print(f'An error occurred: {error}')
             return None
+
+    def mark_as_read(self, user_id, msg_id):
+        """Mark a message as read."""
+        try:
+            self.service.users().messages().modify(
+                userId=user_id,
+                id=msg_id,
+                body={'removeLabelIds': ['UNREAD']}
+            ).execute()
+            return 0
+        except Exception as error:
+            return -1

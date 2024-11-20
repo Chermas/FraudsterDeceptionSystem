@@ -12,7 +12,7 @@ class OpenAIClient:
             raise ValueError("API key not provided and OPENAI_API_KEY environment variable not set.")
         openai.api_key = self.api_key
 
-    def send_prompt(self, prompt):
+    def answer_email(self, prompt):
         """
         Send a prompt to the OpenAI API and get the response.
         :param prompt: The prompt text to send.
@@ -21,21 +21,41 @@ class OpenAIClient:
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": 'Answer the following email: \n' + prompt}]
+                messages=[{"role": "user", "content": 'Answer the following email by outputting only the body text and not the subject: \n' + prompt}]
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
 
-    def send_prompts(self, prompts, model='gpt-3.5-turbo', temperature=0.7, max_tokens=150):
+    def fill_pdf(self, prompt):
         """
-        Send multiple prompts to the OpenAI API and get the responses.
-        :param prompts: A list of prompt texts to send.
-        :return: A list of response texts.
+        Send a prompt to the OpenAI API and get the response.
+        :param prompt: The prompt text to send.
+        :return: The response text from the model.
         """
-        responses = []
-        for prompt in prompts:
-            response = self.send_prompt(prompt, temperature)
-            responses.append(response)
-        return responses
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": 'Based on the following email, please output some text that is somewhat relevant in order to fill a pdf file to be sent: \n' + prompt}],
+            )
+            return response.choices[0].text.strip()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
+    def generate_pdf_name(self, prompt):
+        """
+        Send a prompt to the OpenAI API and get the response.
+        :param prompt: The prompt text to send.
+        :return: The response text from the model.
+        """
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": 'Based on the following email come up with a name for a PDF file, without the .pdf extension, please only output the name: \n' + prompt}],
+            )
+            return response.choices[0].text.strip()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None

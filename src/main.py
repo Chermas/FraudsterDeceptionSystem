@@ -1,47 +1,86 @@
+import time
+import threading
+from flask import Flask, request, jsonify
+import conversation_handler
 from gmail_service import GmailService
 from openai_service import OpenAIClient
+import logging_service as logs
+from datetime import datetime
 
-import base64
-from email.mime.text import MIMEText
-import conversation_handler
+# Initialize services
+gmail_service = GmailService()
 
-SENDER_EMAIL = "james.r.dawson70@gmail.com"
+# Shared variable to store the latest command to start a conversation
+command_data = {"start_conversation": None}
 
-def main():
+# Set up Flask API for receiving commands
+app = Flask(__name__)
 
-    gmail = GmailService()
+@app.route('/start_conversation', methods=['POST'])
+def start_conversation():
+    """API endpoint to start a conversation with specified email and subject."""
+    data = request.json
+    email = data.get("email")
+    subject = data.get("subject")
+    if email and subject:
+        conversation_handler.send_first_reply(email, subject)
+        return jsonify({"status": "Conversation command received"}), 200
+    else:
+        return jsonify({"error": "Missing email or subject"}), 400
 
-    # Replace with your email and recipient's email
+@app.route('/status', methods=['GET'])
+def status():
+    """API endpoint to check the system status."""
+    status_info = conversation_handler.get_status()
+    return jsonify(status_info), 200
 
-    # # Email details
-    # subject = 'Test Email from Python Module using OpenAI'
+@app.route('/send_first_email', methods=['POST'])
+def send_first_email():
+    """API endpoint to send the first email in a conversation."""
+    data = request.json
+    sender = data.get("sender")
+    subject = data.get("subject")
+    body = data.get("body")
+    if sender and subject and body:
+        conversation_handler.start_conversation(sender, subject, body)
+        return jsonify({"status": "First email sent"}), 200
+    else:
+        return jsonify({"error": "Missing sender, subject, or body"}), 400
 
-    # # Optional: Path to the attachment file
-    # attachment_path = None  # Set to 'path/to/your/file.ext' if needed
+# Continuous monitoring loop
+def monitor_emails():
+    """Loop to continuously monitor emails and process commands."""
+    while True:
 
-    # # Send the email
+        # Perform email monitoring tasks if needed
+        new_emails = gmail_service.check_for_new_emails()
+        print(f"New emails: {len(new_emails)}")
+        for email in new_emails:
+            print(email['sender'])
+            if conversation_handler.has_conversation(email['sender']):
+                print(f"Conversation with {email['sender']} already exists.")
+                # Process each new email if needed
+                conversation_handler.handle_incoming_message(email)
 
-    # client = OpenAIClient('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')
+        time.sleep(5)  # Adjust the frequency of the loop as needed
 
-    # # Define your prompt
-    # prompt = "Write an email introducing yourself"
+def send_emails():
+    while True:
+        queue = conversation_handler.get_queue()
+        if len(queue) > 0 and datetime.now() >= queue[0]['response_time']:
+            email = queue.pop(0)
+            conversation_handler.send_response(email['email_id'])
+    
+        time.sleep(5)  # Adjust the frequency of the loop as needed
 
-    # # Send the prompt and get the response
-    # response = client.send_prompt(prompt)
+# Start the monitoring loop in a separate thread
+monitor_thread = threading.Thread(target=monitor_emails)
+monitor_thread.start()
 
-    # Print the response
-    # if response:
-    #     print("Response from OpenAI:")
-    #     gmail.send_email(
-    #         sender=SENDER_EMAIL,
-    #         to="john.r.doe90@gmail.com",
-    #         subject=subject,
-    #         message_text=response,
-    #         attachment_file=attachment_path
-    #     )
-    # else:
-    #     print("Failed to get a response.")
-    conversation_handler.send_first_message("john.r.doe90@gmail.com", "Hello")
+# Start the email sending loop in a separate thread
+send_thread = threading.Thread(target=send_emails)
+send_thread.start()
 
-if __name__ == '__main__':
-    main()
+# Run the Flask app in the main thread
+if __name__ == "__main__":
+    app.run(port=5000)
