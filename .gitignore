@@ -2,3 +2,4 @@ credentials.json
 token.json
 src/__pycache__/*
 honeytoken_project-master/*
+src/.env

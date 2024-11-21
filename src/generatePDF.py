@@ -1,4 +1,3 @@
-import string
 import random
 import io
 import os
@@ -12,7 +11,10 @@ import uuid
 import honeytoken_service as honeytoken
 import openai_service as openai
 
-address = os.environ.get('API_URL')
+# address = os.environ.get('API_URL')
+address = "google.com"
+
+client = openai.OpenAIClient()
 
 def update_url(token, name):
     path='templates/template.pdf'
@@ -21,9 +23,11 @@ def update_url(token, name):
     pdf.save('/tmp/' + name + '.pdf')
     
 
-def insert_text(name,context,title,subTitle, section):
+def insert_text(name,body,title,subTitle, section):
    
-    response = openai.fill_pdf(context)
+    response = client.fill_pdf(body)
+
+
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet)
@@ -90,12 +94,11 @@ def get_mod_date():
     stamp = time.strftime('%Y-%m-%d')+'T'+time.strftime('%H:%M:%S')
     return stamp
 
-def generate_pdf(context,title,subtitle,section):
-    name = openai.generate_pdf_name(context)
+def generate_pdf(token, body, title, subtitle, section):
+    name = client.generate_pdf_name(body)
     if name == None:
         name = 'info'
-    token = honeytoken.generate_token()
     update_url(token, name)
-    insert_text(name,context,title,subtitle,section)
+    insert_text(name,body,title,subtitle,section)
     update_metadata(name)
     return '/tmp/'+ name +'.pdf'

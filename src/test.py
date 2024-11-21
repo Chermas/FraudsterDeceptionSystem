@@ -1,5 +1,6 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 import json
+import generatePDF as pdf
 
 def generate_refresh_token(credentials_file='credentials.json', token_file='token.json'):
     SCOPES = [
@@ -15,5 +16,16 @@ def generate_refresh_token(credentials_file='credentials.json', token_file='toke
         token.write(creds.to_json())
     print("Refresh token saved.")
 
+def generate_pdf():
+    context = "Hello James, some important information has come up on the investment opportunity we discussed. I will need some information from you"
+    title = "Test Title"
+    subtitle = "Test Subtitle"
+    section = "Test Section"
+
+    pdf.generate_pdf(context, title, subtitle, section)
+
 # Run this script once to create token.json
-generate_refresh_token()
+# generate_refresh_token()
+
+# Generate a sample PDF
+generate_pdf()

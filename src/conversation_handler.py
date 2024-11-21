@@ -3,13 +3,15 @@ from openai_service import OpenAIClient
 import logging_service as logs
 from datetime import datetime, timezone, timedelta
 import os
-import random
 from bisect import insort
 from email.utils import parseaddr
+import nlp
+import honeytoken_service as honeytoken
 
 
 gmail = GmailService()
-client = OpenAIClient('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')
+client = OpenAIClient()
+NLP = nlp.PDFTriggerDetector()
 
 queue = logs.load_queue_from_file()
 
@@ -105,6 +107,15 @@ def generate_reply(body):
     response = client.answer_email(body)
     return response
 
+def generate_reply_with_pdf(body):
+    """
+    Generate a reply to the sender with a PDF attachment.
+    :param email: The email to reply to.
+    :return: The reply message.
+    """
+    response = client.answer_email_with_pdf(body)
+    return response
+
 def handle_incoming_message(email):
     """
     Handle an incoming message from the sender.
@@ -135,12 +146,28 @@ def send_response(email_id):
 
     body = gmail.get_latest_message_content(email)
 
-    response = generate_reply(body)
-    if response is None:
-        print("Failed to get a response.")
-        return
+    include_pdf = NLP.analyze_email(body)
+
+    if not include_pdf:
+        response = generate_reply(body)
+
+        if response is None:
+            print("Failed to get a response.")
+            return
     
-    res = gmail.reply_to_email(email, response)
+        res = gmail.reply_to_email(email, response)
+    else:
+        response = generate_reply_with_pdf(body)
+
+        if response is None:
+            print("Failed to get a response.")
+            return
+    
+        token, path = honeytoken.generate_pdf(body)
+
+        logs.add_honeytoken_id(token, conv_id)
+
+        res = gmail.reply_to_email_with_attachment(email, response, path)
 
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))
