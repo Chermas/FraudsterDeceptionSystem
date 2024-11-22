@@ -297,12 +297,77 @@ class GmailService:
 
             print(f'Reply sent successfully! Message Id: {send_response}')
 
-            print(f'Message {email["id"]} marked as read.')
-
             return send_response
         except Exception as error:
             print(f'An error occurred: {error}')
             return None
+        
+    def reply_to_email_with_attachment(self, email, response_text, attachment_path):
+        """
+        Reply to an existing email message in the same thread with an attachment.
+        
+        Args:
+            email: Dictionary containing the email details, including "id".
+            response_text: The text content for the reply.
+            attachment_path: The file path of the attachment to include.
+        
+        Returns:
+            The response from the Gmail API if successful, otherwise None.
+        """
+        message = self.get_email_from_id(email["id"])
+
+        try:
+            thread_id = message['threadId']
+            headers = {header['name']: header['value'] for header in message['payload']['headers']}
+            message_id_header = headers.get('Message-ID')
+            from_email = headers.get('From')
+            
+            if not from_email:
+                print("Error: 'From' email address not found in the original message.")
+                return None
+            
+            subject = "Re: " + headers.get('Subject', '')
+
+            # Create the reply message with attachment
+            reply_message = MIMEMultipart()
+            reply_message['to'] = from_email
+            reply_message['subject'] = subject
+            reply_message['In-Reply-To'] = message_id_header
+            reply_message['References'] = message_id_header
+
+            # Attach the email body
+            reply_body = MIMEText(response_text, 'plain')
+            reply_message.attach(reply_body)
+
+            # Attach the file
+            content_type, encoding = mimetypes.guess_type(attachment_path)
+            if content_type is None or encoding is not None:
+                content_type = 'application/octet-stream'
+            main_type, sub_type = content_type.split('/', 1)
+
+            with open(attachment_path, 'rb') as f:
+                file_data = f.read()
+            attachment = MIMEBase(main_type, sub_type)
+            attachment.set_payload(file_data)
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(attachment_path))
+            reply_message.attach(attachment)
+
+            # Encode the reply message
+            raw_message = base64.urlsafe_b64encode(reply_message.as_bytes()).decode()
+
+            # Send the reply within the original thread
+            send_response = self.service.users().messages().send(
+                userId='me',
+                body={'raw': raw_message, 'threadId': thread_id}
+            ).execute()
+
+            print(f"Reply with attachment sent successfully! Message Id: {send_response['id']}")
+            return send_response
+        except Exception as error:
+            print(f'An error occurred while sending the reply with attachment: {error}')
+            return None
+
 
     def mark_as_read(self, user_id, msg_id):
         """Mark a message as read."""

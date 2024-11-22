@@ -146,7 +146,12 @@ def send_response(email_id):
 
     body = gmail.get_latest_message_content(email)
 
-    include_pdf = NLP.analyze_email(body)
+    conv_length = logs.get_conversation_length(conv_id)
+
+    if conv_length < 5:
+        include_pdf = False
+    else:
+        include_pdf = NLP.analyze_email(body)
 
     if not include_pdf:
         response = generate_reply(body)
@@ -171,6 +176,7 @@ def send_response(email_id):
 
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))
+        dequeue_email()
     else:
         print("Failed to send the reply.")
 
@@ -240,6 +246,8 @@ def dequeue_email():
     :return: The email removed from the queue.
     """
     if len(queue) > 0:
-        return queue.pop(0)
+        ret = queue.pop(0)
+        logs.save_queue_to_file(queue)
+        return ret
     return None
     

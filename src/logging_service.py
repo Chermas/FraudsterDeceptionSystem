@@ -67,6 +67,17 @@ def get_conversation_log(conversation_id):
         conversation_log = json.load(file)
     return conversation_log
 
+def get_conversation_length(conversation_id):
+    """
+    Get the length of a conversation (number of messages).
+    :param conversation_id: The ID of the conversation.
+    :return: The length of the conversation.
+    """
+    # Get the length of the conversation
+    with open(f"../logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+        return len(conversation_log["messages"])
+
 def get_system_info():
     """
     Get information on the system such as how many total and active conversations.
@@ -156,4 +167,4 @@ def load_queue_from_file():
         with open(QUEUE_FILE_PATH, 'r') as file:
             loaded_entries = json.load(file)
             return [{"email_id": entry["email_id"], "response_time": string_to_datetime(entry["response_time"])} for entry in loaded_entries]
-    return []
+    return []    

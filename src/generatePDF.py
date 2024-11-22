@@ -11,8 +11,7 @@ import uuid
 import honeytoken_service as honeytoken
 import openai_service as openai
 
-# address = os.environ.get('API_URL')
-address = "google.com"
+address = os.environ.get('API_URL')
 
 client = openai.OpenAIClient()
 
@@ -26,8 +25,6 @@ def update_url(token, name):
 def insert_text(name,body,title,subTitle, section):
    
     response = client.fill_pdf(body)
-
-
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet)

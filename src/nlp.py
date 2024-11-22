@@ -13,8 +13,7 @@ class PDFTriggerDetector:
             "document": ["doc", "file", "attachment", "paperwork"],
             "proof": ["evidence", "verification"],
             "contract": ["agreement", "deal"],
-            "send": ["deliver", "provide", "attach"],
-            "information": ["details", "data"]
+            "send": ["deliver", "provide", "attach"]
         }
         
         # Expand keywords with synonyms

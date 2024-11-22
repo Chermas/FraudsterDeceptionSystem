@@ -7,9 +7,9 @@ def generate_token():
 def generate_pdf_with_url(context, title, subtitle, section):
     pass
 
-def generate_pdf(body, title='Information', subtitle='', section=''):
+def generate_pdf(body, title='Information', subtitle='info', section='info'):
     token = generate_token()
-    path = pdf.generate_pdf(body, title, subtitle, section)
+    path = pdf.generate_pdf(token, body, title, subtitle, section)
     return token, path
 
 def generate_url():

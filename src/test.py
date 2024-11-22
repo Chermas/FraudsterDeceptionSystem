@@ -25,7 +25,7 @@ def generate_pdf():
     pdf.generate_pdf(context, title, subtitle, section)
 
 # Run this script once to create token.json
-# generate_refresh_token()
+generate_refresh_token()
 
 # Generate a sample PDF
-generate_pdf()
+# generate_pdf()
