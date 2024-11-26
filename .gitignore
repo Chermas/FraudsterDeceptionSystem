@@ -5,3 +5,6 @@ honeytoken_project-master/*
 src/.env
 logs/*
 src/response_queue.json
+pdf_files/*
+Dockerfile
+docker-compose.yaml

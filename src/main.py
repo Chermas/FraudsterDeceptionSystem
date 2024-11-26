@@ -51,7 +51,7 @@ def send_first_email():
 def monitor_emails():
     """Loop to continuously monitor emails and process commands."""
     while True:
-
+        print("Checking for new emails...")
         # Perform email monitoring tasks if needed
         new_emails = gmail_service.check_for_new_emails()
         print(f"New emails: {len(new_emails)}")
@@ -83,4 +83,4 @@ send_thread.start()
 
 # Run the Flask app in the main thread
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(port=8000)

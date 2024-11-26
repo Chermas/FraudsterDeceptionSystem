@@ -6,7 +6,7 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.rl_config import defaultPageSize
 from reportlab.lib.utils import simpleSplit
 import datetime
-from pikepdf import Pdf, Page, Encryption
+from pikepdf import Pdf, Page, Encryption, Name, Dictionary, String
 import uuid
 import honeytoken_service as honeytoken
 import openai_service as openai
@@ -15,12 +15,30 @@ address = os.environ.get('API_URL')
 
 client = openai.OpenAIClient()
 
+
 def update_url(token, name):
-    path='templates/template.pdf'
+    path = 'templates/template.pdf'
     pdf = Pdf.open(path)
-    Page(pdf.pages[0]).obj['/AA']['/O']['/URI'] = address + '/' + token
-    pdf.save('/tmp/' + name + '.pdf')
-    
+    page = pdf.pages[0]
+
+    # Check if /AA already exists; if not, initialize it
+    if Name('/AA') not in page.obj:
+        page.obj[Name('/AA')] = Dictionary()
+
+    # Ensure we have the AA dictionary object
+    aa_dict = page.obj[Name('/AA')]
+
+    # Safely assign the /O action to the /AA dictionary
+    aa_dict[Name('/O')] = Dictionary({
+        '/S': Name('/URI'),  # Action type
+        '/URI': String(address + '/' + token)  # The URL
+    })
+
+    print('URL:', address + '/' + token)
+    print('EMbedded action:', aa_dict[Name('/O')])
+
+    # Save the modified PDF
+    pdf.save('../pdf_files/' + name + '.pdf')
 
 def insert_text(name,body,title,subTitle, section):
    
@@ -57,7 +75,7 @@ def insert_text(name,body,title,subTitle, section):
     can.save()
     packet.seek(0)
 
-    token_pdf = Pdf.open('/tmp/'+name+'.pdf',allow_overwriting_input=True)
+    token_pdf = Pdf.open('../pdf_files/'+name+'.pdf',allow_overwriting_input=True)
     text_pdf = Pdf.open(packet)
     token_pdf_page = Page(token_pdf.pages[0])
     text_pdf_page = Page(text_pdf.pages[0])
@@ -67,7 +85,7 @@ def insert_text(name,body,title,subTitle, section):
     token_pdf.save()
 
 def update_metadata(name):
-   pdf = Pdf.open('/tmp/'+name+'.pdf',allow_overwriting_input=True)
+   pdf = Pdf.open('../pdf_files/'+name+'.pdf',allow_overwriting_input=True)
 
    with pdf.open_metadata(set_pikepdf_as_editor=False) as meta:
     meta['pdf:Producer'] ='Adobe PDF Library 23.1.96'
@@ -98,4 +116,4 @@ def generate_pdf(token, body, title, subtitle, section):
     update_url(token, name)
     insert_text(name,body,title,subtitle,section)
     update_metadata(name)
-    return '/tmp/'+ name +'.pdf'
+    return '../pdf_files/'+ name +'.pdf'

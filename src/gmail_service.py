@@ -18,36 +18,46 @@ from googleapiclient.discovery import build
 class GmailService:
     """A class to interact with the Gmail API."""
 
-    def __init__(self, credentials_file='credentials.json', token_file='token.json'):
+    def __init__(self):
         """
         Initialize the GmailService instance by authenticating and creating a service object.
-        :param credentials_file: Path to the client secret file.
-        :param token_file: Path to the token file.
         """
+        # Use environment variables to determine paths for credentials and token files
+        self.credentials_file = os.getenv('CREDENTIALS_FILE_PATH', 'credentials.json')
+        self.token_file = os.getenv('TOKEN_FILE_PATH', 'token.json')
+
+        if not os.path.exists(self.credentials_file):
+            raise FileNotFoundError(f"Credentials file not found at {self.credentials_file}")
+        if not os.path.exists(self.token_file):
+            raise FileNotFoundError(f"Token file not found at {self.token_file}")
+
         # Define the OAuth 2.0 scopes
         self.SCOPES = [
             'https://www.googleapis.com/auth/gmail.send',
             'https://www.googleapis.com/auth/gmail.readonly',
             'https://www.googleapis.com/auth/gmail.modify'
         ]
-        self.credentials_file = credentials_file
-        self.token_file = token_file
         self.service = self.authenticate()
 
     def authenticate(self):
         """Authenticate using stored credentials and return a Gmail API service instance."""
-        if not os.path.exists(self.token_file):
-            raise Exception("Token file not found. Run the manual authorization flow first.")
+        creds = None
+        if os.path.exists(self.token_file):
+            creds = Credentials.from_authorized_user_file(self.token_file, self.SCOPES)
         
-        creds = Credentials.from_authorized_user_file(self.token_file, self.SCOPES)
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                raise Exception("Invalid credentials or token. Please generate a new token.")
         
-        if creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            # Save updated credentials
             with open(self.token_file, 'w') as token:
                 token.write(creds.to_json())
         
         service = build('gmail', 'v1', credentials=creds)
         return service
+
 
     def create_message(self, sender, to, subject, message_text):
         """Create an email message without attachments."""

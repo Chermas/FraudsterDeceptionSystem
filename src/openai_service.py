@@ -2,18 +2,40 @@ import os
 import openai
 from dotenv import load_dotenv
 
-load_dotenv()
-
 class OpenAIClient:
-    def __init__(self, api_key=None):
+    def __init__(self):
         """
         Initialize the OpenAI Client.
-        :param api_key: OpenAI API key. If None, will look for API_KEY environment variable.
+        Dynamically load the API key from .env for local testing or Docker secrets.
         """
-        self.api_key = api_key or os.getenv('API_KEY')
+        env_file_path = os.getenv('ENV_PATH', '.env')  # Default to .env for local testing
+        if os.path.exists(env_file_path):
+            load_dotenv(env_file_path)
+        else:
+            print(f"No .env file found at {env_file_path}. Assuming Docker secrets.")
+
+        self.api_key = os.getenv('API_KEY')
         if not self.api_key:
-            raise ValueError("API key not provided and API_KEY environment variable not set.")
+            raise ValueError("API key not set. Ensure API_KEY is provided in the .env file or Docker secret.")
+
         openai.api_key = self.api_key
+
+    def answer_email(self, prompt):
+        """
+        Send a prompt to the OpenAI API and get the response.
+        :param prompt: The prompt text to send.
+        :return: The response text from the model.
+        """
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": 'Answer the following email by outputting only the body text and not the subject: \n' + prompt}]
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
 
     def answer_email(self, prompt):
         """

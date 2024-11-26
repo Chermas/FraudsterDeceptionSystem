@@ -13,10 +13,11 @@ def track_and_redirect(token):
     timestamp = request.headers.get('Date')
     # Log the unique token and visitor information
     logs.add_honeytoken_interaction(token, visitor_ip, user_agent, timestamp)
+    print(f"Received a request from {visitor_ip} with user agent {user_agent} and referrer {referrer} for token {token}")
 
     # Redirect to the target URL
     return redirect("https://google.com", code=302)  # Replace with the actual target URL
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(port=5000)

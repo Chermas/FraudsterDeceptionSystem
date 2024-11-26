@@ -1,8 +1,18 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
-import json
 import generatePDF as pdf
+import os
 
-def generate_refresh_token(credentials_file='credentials.json', token_file='token.json'):
+def generate_refresh_token():
+    """
+    Generate a new refresh token and save it to the token file.
+    """
+    # Use environment variables to determine paths
+    credentials_file = os.getenv('CREDENTIALS_FILE_PATH', 'credentials.json')
+    token_file = os.getenv('TOKEN_FILE_PATH', 'token.json')
+
+    if not os.path.exists(credentials_file):
+        raise FileNotFoundError(f"Credentials file not found at {credentials_file}")
+
     SCOPES = [
         'https://www.googleapis.com/auth/gmail.send',
         'https://www.googleapis.com/auth/gmail.readonly',
@@ -16,16 +26,19 @@ def generate_refresh_token(credentials_file='credentials.json', token_file='toke
         token.write(creds.to_json())
     print("Refresh token saved.")
 
+
 def generate_pdf():
     context = "Hello James, some important information has come up on the investment opportunity we discussed. I will need some information from you"
     title = "Test Title"
     subtitle = "Test Subtitle"
     section = "Test Section"
+    token = 'test_token'
 
-    pdf.generate_pdf(context, title, subtitle, section)
+    pdf.generate_pdf(token, context, title, subtitle, section)
 
 # Run this script once to create token.json
-generate_refresh_token()
+# generate_refresh_token()
 
 # Generate a sample PDF
-# generate_pdf()
+generate_pdf()
+
