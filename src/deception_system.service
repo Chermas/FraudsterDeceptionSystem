@@ -1,0 +1,13 @@
+[Unit]
+Description=Mailing fraudster deception system
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/system/FraudsterDeceptionSystem/src/venv/bin/python -u /home/system/FraudsterDeceptionSystem/src/main.py
+Restart=on-failure
+WorkingDirectory=/home/system/FraudsterDeceptionSystem/src
+Environment="PATH=/home/system/FraudsterDeceptionSystem/src/venv/bin"
+
+[Install]
+WantedBy=multi-user.target

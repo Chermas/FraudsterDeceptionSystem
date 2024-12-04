@@ -59,11 +59,10 @@ class GmailService:
         return service
 
 
-    def create_message(self, sender, to, subject, message_text):
+    def create_message(self, to, subject, message_text):
         """Create an email message without attachments."""
         message = MIMEText(message_text)
         message['to'] = to
-        message['from'] = sender
         message['subject'] = subject
         # Encode the message in base64 format
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
@@ -109,12 +108,12 @@ class GmailService:
             print(f'An error occurred: {error}')
             return None
 
-    def send_email(self, sender, to, subject, message_text, attachment_file=None):
+    def send_email(self, to, subject, message_text, attachment_file=None):
         """Send an email with or without an attachment."""
         if attachment_file:
-            message = self.create_message_with_attachment(sender, to, subject, message_text, attachment_file)
+            message = self.create_message_with_attachment(to, subject, message_text, attachment_file)
         else:
-            message = self.create_message(sender, to, subject, message_text)
+            message = self.create_message(to, subject, message_text)
         return self.send_message('me', message)
 
     def list_messages(self, user_id='me', query=''):

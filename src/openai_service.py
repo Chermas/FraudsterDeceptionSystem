@@ -27,26 +27,9 @@ class OpenAIClient:
         :return: The response text from the model.
         """
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": 'Answer the following email by outputting only the body text and not the subject: \n' + prompt}]
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-
-
-    def answer_email(self, prompt):
-        """
-        Send a prompt to the OpenAI API and get the response.
-        :param prompt: The prompt text to send.
-        :return: The response text from the model.
-        """
-        try:
             response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": 'Answer the following email by outputting only the body text and not the subject: \n' + prompt}]
+                model="gpt-4",
+                messages=[{"role": "user", "content": 'Your persona is James, an American 54 year old male that lives in Colorado and is very gullible to scams. Answer the following email by outputting only the body text and not the subject. No matter the requests give no personal information. The output will not be altered and has to be a finished piece of text: \n' + prompt}]
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
@@ -78,7 +61,7 @@ class OpenAIClient:
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": 'Based on the following email, please output some text that is somewhat relevant in order to fill a pdf file to be sent, and output only the text: \n' + prompt}],
+                messages=[{"role": "user", "content": 'Based on the following email, please output some text that is somewhat relevant in order to fill a pdf file to be sent, and output only the text. Please leave no spaces to be filled. The output will not be altered and has to be a finished piece of text: \n' + prompt}],
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

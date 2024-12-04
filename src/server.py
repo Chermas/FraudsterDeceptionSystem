@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect
 import logging_service as logs
+import datetime as datetime
 
 app = Flask(__name__)
 
@@ -10,7 +11,7 @@ def track_and_redirect(token):
     user_agent = request.headers.get('User-Agent')
     referrer = request.referrer
 
-    timestamp = request.headers.get('Date')
+    timestamp = datetime.datetime.now().isoformat()
     # Log the unique token and visitor information
     logs.add_honeytoken_interaction(token, visitor_ip, user_agent, timestamp)
     print(f"Received a request from {visitor_ip} with user agent {user_agent} and referrer {referrer} for token {token}")
@@ -20,4 +21,4 @@ def track_and_redirect(token):
 
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(host="0.0.0.0", port=5000)

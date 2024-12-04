@@ -7,6 +7,7 @@ from bisect import insort
 from email.utils import parseaddr
 import nlp
 import honeytoken_service as honeytoken
+import threading
 
 
 gmail = GmailService()
@@ -14,6 +15,8 @@ client = OpenAIClient()
 NLP = nlp.PDFTriggerDetector()
 
 queue = logs.load_queue_from_file()
+
+queue_lock = threading.Lock()
 
 def send_first_reply(sender, subject):
     """
@@ -148,7 +151,7 @@ def send_response(email_id):
 
     conv_length = logs.get_conversation_length(conv_id)
 
-    if conv_length < 5:
+    if conv_length < 4:
         include_pdf = False
     else:
         include_pdf = NLP.analyze_email(body)
@@ -220,34 +223,35 @@ def generate_response_time():
     return response_time
 
 def add_email_to_queue(email_id):
-    """
-    Generate a response time for the given email ID and insert it into the response queue,
-    maintaining the queue sorted by response timestamp.
-    
-    Args:
-        email_id: The ID of the email to schedule.
-    """
-    # Generate a response time for this email
-    response_time = generate_response_time()
-    
-    # Create a dictionary with email details
-    email_entry = {"email_id": email_id, "response_time": response_time}
-    
-    # Insert email into the queue in a sorted position based on response time
-    insort(queue, email_entry, key=lambda x: x["response_time"])
+    global queue
+    with queue_lock:  # Ensure exclusive access
+        queue = logs.load_queue_from_file()  # Reload the queue from the file
 
-    logs.save_queue_to_file(queue)
+        # Generate a response time for this email
+        response_time = generate_response_time()
+        
+        # Create a dictionary with email details
+        email_entry = {"email_id": email_id, "response_time": response_time}
+        
+        # Insert email into the queue in a sorted position based on response time
+        insort(queue, email_entry, key=lambda x: x["response_time"])
 
-    print(f"Email {email_id} added to the queue for {response_time}")
+        print("Queue:" + str(queue))
+        logs.save_queue_to_file(queue)  # Save the updated queue to the file
+
+        print(f"Email {email_id} added to the queue for {response_time}")
 
 def dequeue_email():
-    """
-    Remove the next email from the conversation queue.
-    :return: The email removed from the queue.
-    """
-    if len(queue) > 0:
-        ret = queue.pop(0)
-        logs.save_queue_to_file(queue)
-        return ret
-    return None
+    global queue
+    with queue_lock:  # Ensure exclusive access
+        queue = logs.load_queue_from_file()  # Reload the queue from the file
+
+        print("Dequeueing email " + str(queue))
+        if len(queue) > 0:
+            ret = queue.pop(0)
+            print("Queue:" + str(queue))
+            logs.save_queue_to_file(queue)  # Save the updated queue to the file
+            print(f"Email {ret['email_id']} dequeued.")
+            return ret
+        return None
     

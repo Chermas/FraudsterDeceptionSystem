@@ -103,13 +103,17 @@ def add_honeytoken_id(honeytoken_id, conversation_id):
     :param conversation_id: The ID of the conversation.
     """
     # Add the honeytoken ID to the conversation
-    if not os.path.exists("../logs/{conversation_id}.json"):
+    if not os.path.exists(f"../logs/{conversation_id}.json"):
+        print(f"Conversation does not exist. for file {conversation_id}")
         return "Conversation does not exist."
-    
+    print(f"Adding honeytoken ID to conversation. {honeytoken_id} to {conversation_id}")
     with open(f"../logs/{conversation_id}.json", "r") as file:
         conversation_log = json.load(file)
         conversation_log["honeytoken_id"] = honeytoken_id
         conversation_log["interactions"] = []
+        with open(f"../logs/{conversation_id}.json", "w") as f:
+            json.dump(conversation_log, f)
+    return "Honeytoken ID added to conversation."
 
 def get_honeytoken_id(conversation_id):
     """
