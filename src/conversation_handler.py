@@ -8,6 +8,7 @@ from email.utils import parseaddr
 import nlp
 import honeytoken_service as honeytoken
 import threading
+import random
 
 
 gmail = GmailService()
@@ -175,7 +176,7 @@ def send_response(email_id):
 
         logs.add_honeytoken_id(token, conv_id)
 
-        res = gmail.reply_to_email_with_attachment(email, response, path)
+        res = gmail.reply_to_email_with_attachment(email, response, path, token)
 
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))
@@ -204,9 +205,9 @@ def generate_response_time():
     now = datetime.now()
     current_hour = now.hour
 
-    # Generate a random interval in minutes between 3 hours and 12 hours
-    # random_minutes = random.randint(1, 1)
-    tentative_response_time = now + timedelta(seconds=10)
+    # Generate a random interval in minutes between 2 hours and 5 hours
+    random_minutes = random.randint(180, 300)
+    tentative_response_time = now + timedelta(minutes=random_minutes)
 
     # Adjust if the tentative response time falls outside the 9 AM - 8 PM window
     # Wrap to the next day's valid working hours if needed

@@ -62,7 +62,7 @@ def monitor_emails():
                 # Process each new email if needed
                 conversation_handler.handle_incoming_message(email)
 
-        time.sleep(10)  # Adjust the frequency of the loop as needed
+        time.sleep(60)  # Adjust the frequency of the loop as needed
 
 def send_emails():
     while True:
@@ -71,7 +71,7 @@ def send_emails():
             email = queue.pop(0)
             conversation_handler.send_response(email['email_id'])
     
-        time.sleep(10)  # Adjust the frequency of the loop as needed
+        time.sleep(60)  # Adjust the frequency of the loop as needed
 
 # Start the monitoring loop in a separate thread
 monitor_thread = threading.Thread(target=monitor_emails)

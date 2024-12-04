@@ -2,8 +2,8 @@
 import requests
 import sys
 
-address = "http://localhost:8005"
-# address = "http://167.235.242.47:8005"
+# address = "http://localhost:8005"
+address = "http://167.235.242.47:8005"
 
 def start_conversation(email, subject):
     url = address + "/start_conversation"

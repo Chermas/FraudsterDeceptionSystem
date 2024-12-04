@@ -311,14 +311,16 @@ class GmailService:
             print(f'An error occurred: {error}')
             return None
         
-    def reply_to_email_with_attachment(self, email, response_text, attachment_path):
+    def reply_to_email_with_attachment(self, email, response_text, attachment_path, honeytoken_id):
         """
-        Reply to an existing email message in the same thread with an attachment.
+        Reply to an existing email message in the same thread with an attachment and a hyperlink.
         
         Args:
             email: Dictionary containing the email details, including "id".
             response_text: The text content for the reply.
             attachment_path: The file path of the attachment to include.
+            link_text: The display text for the hyperlink.
+            link_url: The URL for the hyperlink.
         
         Returns:
             The response from the Gmail API if successful, otherwise None.
@@ -344,8 +346,16 @@ class GmailService:
             reply_message['In-Reply-To'] = message_id_header
             reply_message['References'] = message_id_header
 
-            # Attach the email body
-            reply_body = MIMEText(response_text, 'plain')
+            # Attach the email body with a hyperlink
+            html_body = f"""
+            <html>
+                <body>
+                    <p>{response_text}</p>
+                    <p><a href="http://167.235.242.47:5000/{honeytoken_id}" target="_blank">More information</a></p>
+                </body>
+            </html>
+            """
+            reply_body = MIMEText(html_body, 'html')
             reply_message.attach(reply_body)
 
             # Attach the file
@@ -371,11 +381,12 @@ class GmailService:
                 body={'raw': raw_message, 'threadId': thread_id}
             ).execute()
 
-            print(f"Reply with attachment sent successfully! Message Id: {send_response['id']}")
+            print(f"Reply with attachment and hyperlink sent successfully! Message Id: {send_response['id']}")
             return send_response
         except Exception as error:
-            print(f'An error occurred while sending the reply with attachment: {error}')
+            print(f'An error occurred while sending the reply with attachment and hyperlink: {error}')
             return None
+
 
 
     def mark_as_read(self, user_id, msg_id):

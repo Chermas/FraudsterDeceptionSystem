@@ -78,9 +78,8 @@ def insert_text(name, body, title, subTitle, section, token):
     link_width = stringWidth(link_text, "Helvetica", 12)
     can.line(link_x, underline_y, link_x + link_width, underline_y)  # Add underline
 
-    # Make the text clickable
-    link_bbox = (link_x, link_y - 5, link_x + link_width, link_y + 10)  # Define the clickable area
-    can.linkURL(link_url, link_bbox, relative=0)
+    # Explicitly create an annotation for the clickable link
+    can.linkURL(link_url, (link_x, link_y - 2, link_x + link_width, link_y + 10), relative=0)
 
     # Finalize the canvas
     can.save()

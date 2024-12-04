@@ -45,8 +45,8 @@ def test_queue():
 # generate_refresh_token()
 
 # Generate a sample PDF
-# generate_pdf()
+generate_pdf()
 
 # Test the email queue  
-test_queue()
+# test_queue()
 
