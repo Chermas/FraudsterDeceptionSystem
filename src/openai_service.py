@@ -29,7 +29,7 @@ class OpenAIClient:
         try:
             response = openai.chat.completions.create(
                 model="gpt-4",
-                messages=[{"role": "user", "content": 'Your persona is James, an American 54 year old male that lives in Colorado and is very gullible to scams. Answer the following email by outputting only the body text and not the subject. No matter the requests give no personal information. The output will not be altered and has to be a finished piece of text: \n' + prompt}]
+                messages=[{"role": "user", "content": 'Your persona is James, an American 54 year old male that lives in Colorado. Answer the following email by outputting only the body text and not the subject. The output will not be altered and has to be a finished piece of text: \n' + prompt}]
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

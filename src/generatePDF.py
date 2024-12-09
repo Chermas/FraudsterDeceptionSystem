@@ -64,23 +64,6 @@ def insert_text(name, body, title, subTitle, section, token):
         can.drawString(x, y, t)
         y -= can._leading
 
-    # Add a clickable hyperlink
-    link_text = "Click here for more information"
-    link_url = address + "/" + token  # Construct the URL dynamically
-    link_x = x
-    link_y = y - 20  # Place the link below the body text
-
-    # Style the hyperlink (blue and underlined)
-    can.setFillColor(blue)
-    can.setFont("Helvetica", 12)
-    can.drawString(link_x, link_y, link_text)
-    underline_y = link_y - 2
-    link_width = stringWidth(link_text, "Helvetica", 12)
-    can.line(link_x, underline_y, link_x + link_width, underline_y)  # Add underline
-
-    # Explicitly create an annotation for the clickable link
-    can.linkURL(link_url, (link_x, link_y - 2, link_x + link_width, link_y + 10), relative=0)
-
     # Finalize the canvas
     can.save()
     packet.seek(0)
