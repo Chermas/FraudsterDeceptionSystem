@@ -2,6 +2,7 @@ import json
 import hashlib
 import os
 from datetime import datetime
+import uuid
 
 def get_conversation_id(sender):
     """
@@ -30,6 +31,10 @@ def create_new_conversation_log(sender):
     }
     if not os.path.exists("../logs"):
         os.makedirs("../logs")
+
+    if os.path.exists(f"../logs/{conversation_id}.json"):
+        print(f"Conversation log already exists for {conversation_id}")
+        return conversation_id
 
     with open(f"../logs/{conversation_id}.json", "w") as file:
         json.dump(conversation_log, file)
@@ -78,24 +83,6 @@ def get_conversation_length(conversation_id):
         conversation_log = json.load(file)
         return len(conversation_log["messages"])
 
-def get_system_info():
-    """
-    Get information on the system such as how many total and active conversations.
-    :return: System information.
-    """
-    # Get system information
-    pass
-
-def get_latest_messages(conversation_id, num_messages):
-    """
-    Get the latest messages from a conversation.
-    :param conversation_id: The ID of the conversation.
-    :param num_messages: The number of messages to retrieve.
-    :return: The latest messages.
-    """
-    # Get the latest messages from the conversation
-    pass
-
 def add_honeytoken_id(honeytoken_id, conversation_id):
     """
     Add a honeytoken ID to a conversation.
@@ -110,7 +97,7 @@ def add_honeytoken_id(honeytoken_id, conversation_id):
     with open(f"../logs/{conversation_id}.json", "r") as file:
         conversation_log = json.load(file)
         conversation_log["honeytoken_id"] = honeytoken_id
-        conversation_log["interactions"] = []
+        conversation_log["interaction"] = []
         with open(f"../logs/{conversation_id}.json", "w") as f:
             json.dump(conversation_log, f)
     return "Honeytoken ID added to conversation."
@@ -128,7 +115,18 @@ def get_honeytoken_id(conversation_id):
 
     return honeytoken_id
 
-def add_honeytoken_interaction(honeytoken_id, ip_address, user_agent, timestamp):
+def has_honeytoken_id(conversation_id):
+    """
+    Check if a conversation has a honeytoken ID.
+    :param conversation_id: The ID of the conversation.
+    :return: True if the conversation has a honeytoken ID, False otherwise.
+    """
+    # Check if the conversation has a honeytoken ID
+    with open(f"../logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+        return "honeytoken_id" in conversation_log
+
+def add_token_interaction(token_id, ip_address, user_agent, timestamp):
     """
     Add an interaction to a honeytoken.
     :param honeytoken_id: The honeytoken ID.
@@ -139,11 +137,60 @@ def add_honeytoken_interaction(honeytoken_id, ip_address, user_agent, timestamp)
     for file in os.listdir("../logs"):
         with open(f"../logs/{file}", "r") as f:
             conversation_log = json.load(f)
-            if conversation_log.get("honeytoken_id") == honeytoken_id:
-                conversation_log["interactions"].append({"ip_address": ip_address, "user_agent": user_agent, "timestamp": timestamp})
+            if conversation_log.get("honeytoken_id") == token_id:
+                conversation_log["interaction"].append({"ip_address": ip_address, "user_agent": user_agent, "timestamp": timestamp})
                 with open(f"../logs/{file}", "w") as f:
                     json.dump(conversation_log, f)
                 return "Interaction added to honeytoken log."
+            if conversation_log.get("signature_id") == token_id:
+                conversation_log["interaction"].append({"ip_address": ip_address, "user_agent": user_agent, "timestamp": timestamp})
+                with open(f"../logs/{file}", "w") as f:
+                    json.dump(conversation_log, f)
+                return "Interaction added to signature log."
+            
+def add_signature_id(conversation_id):
+    """
+    Add a honeytoken ID to a conversation.
+    :param honeytoken_id: The honeytoken ID.
+    :param conversation_id: The ID of the conversation.
+    """
+    # Add the honeytoken ID to the conversation
+    if not os.path.exists(f"../logs/{conversation_id}.json"):
+        print(f"Conversation does not exist. for file {conversation_id}")
+        return "Conversation does not exist."
+    signature_id = uuid.uuid4().hex
+    print(f"Adding signature ID to conversation. {signature_id} to {conversation_id}")
+    with open(f"../logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+        conversation_log["signature_id"] = signature_id
+        conversation_log["interactions"] = []
+        with open(f"../logs/{conversation_id}.json", "w") as f:
+            json.dump(conversation_log, f)
+    return "Signature ID added to conversation."
+
+def get_signature_id(conversation_id):
+    """
+    Get the honeytoken ID associated with a conversation.
+    :param conversation_id: The ID of the conversation.
+    :return: The honeytoken ID.
+    """
+    # Get the honeytoken ID associated with the conversation
+    with open(f"../logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+        signature_id = conversation_log.get("signature_id")
+
+    return signature_id
+
+def has_signature_id(conversation_id):
+    """
+    Check if a conversation has a signature ID.
+    :param conversation_id: The ID of the conversation.
+    :return: True if the conversation has a signature ID, False otherwise.
+    """
+    # Check if the conversation has a signature ID
+    with open(f"../logs/{conversation_id}.json", "r") as file:
+        conversation_log = json.load(file)
+        return "signature_id" in conversation_log
             
 # Path for the queue file
 QUEUE_FILE_PATH = 'response_queue.json'

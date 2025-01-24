@@ -20,23 +20,7 @@ class OpenAIClient:
 
         openai.api_key = self.api_key
 
-    def answer_email(self, prompt):
-        """
-        Send a prompt to the OpenAI API and get the response.
-        :param prompt: The prompt text to send.
-        :return: The response text from the model.
-        """
-        try:
-            response = openai.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": 'Your persona is James, an American 54 year old male that lives in Colorado. Answer the following email by outputting only the body text and not the subject. The output will not be altered and has to be a finished piece of text: \n' + prompt}]
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None
-        
-    def answer_email_with_pdf(self, prompt):
+    def answer_email(self, email):
         """
         Send a prompt to the OpenAI API and get the response.
         :param prompt: The prompt text to send.
@@ -45,30 +29,46 @@ class OpenAIClient:
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": 'Your persona is James. Answer the following email by outputting only the body text and not the subject. The answer will include a pdf file containing information relevant to the email being answered: \n' + prompt}]
+                messages=[{"role": "user", "content": 'Your persona is James Dawson. Answer the following scam email by outputting only the body text and not the subject. If possible answer in the language the email is in. Keep it short. Please go along with the scam and try to keep the conversation going. Do not give any personal information or banking details. The output will not be altered and has to be a finished piece of text: \n' + email}]
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        
+    def answer_email_with_pdf(self, email):
+        """
+        Send a prompt to the OpenAI API and get the response.
+        :param email: The prompt text to send.
+        :return: The response text from the model.
+        """
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": 'Your persona is James Dawson. Answer the following email by outputting only the body text and not the subject. If possible answer in the language the email is in. Keep it short. The output will not be altered and has to be a finished piece of text. The answer will include a pdf file containing information relevant to the email being answered: \n' + email}]
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
 
-    def fill_pdf(self, prompt):
+    def fill_pdf(self, email):
         """
         Send a prompt to the OpenAI API and get the response.
-        :param prompt: The prompt text to send.
+        :param email: The email text to send.
         :return: The response text from the model.
         """
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": 'Based on the following email, please output some text that is somewhat relevant in order to fill a pdf file to be sent, and output only the text. Please leave no spaces to be filled. The output will not be altered and has to be a finished piece of text: \n' + prompt}],
+                messages=[{"role": "user", "content": 'Based on the following email, please output text that is relevant in order to fill a pdf file to be sent, and output only the text. Please leave no spaces to be filled. The output will not be altered and has to be a finished piece of text: \n' + email}],
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
         
-    def generate_pdf_name(self, prompt):
+    def generate_pdf_name(self, email):
         """
         Send a prompt to the OpenAI API and get the response.
         :param prompt: The prompt text to send.
@@ -77,7 +77,7 @@ class OpenAIClient:
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": 'Based on the following email come up with a name for a PDF file, without the .pdf extension, please only output the name: \n' + prompt}],
+                messages=[{"role": "user", "content": 'Based on the following email come up with a name for a PDF file, without the .pdf extension, please only output the name: \n' + email}],
             )
             return response.choices[0].message.content.strip()
         except Exception as e:

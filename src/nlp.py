@@ -18,6 +18,7 @@ class PDFTriggerDetector:
         
         # Expand keywords with synonyms
         self.expanded_keywords = self.expand_keywords(self.base_keywords)
+        print("Expanded keywords:", self.expanded_keywords)
 
     def expand_keywords(self, base_keywords):
         """

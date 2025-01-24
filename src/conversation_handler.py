@@ -40,6 +40,9 @@ def send_first_reply(sender, subject):
     # date = converted_date.isoformat()
 
     conv_id = logs.create_new_conversation_log(sender)
+    logs.add_signature_id(conv_id)
+
+    token = logs.get_signature_id(conv_id)
 
     logs.add_to_log(conv_id, sender, body, date)
 
@@ -48,7 +51,7 @@ def send_first_reply(sender, subject):
         print("Failed to get a response.")
         return
     
-    res = gmail.reply_to_email(email, response)
+    res = gmail.reply_to_email(email, response, token)
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))
     else:
@@ -63,6 +66,10 @@ def start_conversation(sender, subject, body):
     """
     conv_id = logs.create_new_conversation_log(sender)
 
+    logs.add_signature_id(conv_id)
+
+    token = logs.get_signature_id(conv_id)
+
     converted_date = datetime.now()
     date = converted_date.strftime('%Y-%m-%d %H:%M:%S %Z')
 
@@ -73,7 +80,7 @@ def start_conversation(sender, subject, body):
         print("Failed to get a response.")
         return
     
-    res = gmail.send_email(sender, subject, response)
+    res = gmail.send_email(sender, subject, response, token)
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))
     else:
@@ -152,10 +159,15 @@ def send_response(email_id):
 
     conv_length = logs.get_conversation_length(conv_id)
 
-    if conv_length < 4:
+    if not logs.has_signature_id(conv_id):
+        logs.add_signature_id(conv_id)
+
+    sig_id = logs.get_signature_id(conv_id)
+
+    if conv_length < 2 and not logs.has_honeytoken_id(conv_id):
         include_pdf = False
     else:
-        include_pdf = NLP.analyze_email(body)
+        include_pdf = NLP.analyze_email(body) and not logs.has_honeytoken_id(conv_id)
 
     if not include_pdf:
         response = generate_reply(body)
@@ -164,7 +176,7 @@ def send_response(email_id):
             print("Failed to get a response.")
             return
     
-        res = gmail.reply_to_email(email, response)
+        res = gmail.reply_to_email(email, response, sig_id)
     else:
         response = generate_reply_with_pdf(body)
 
@@ -176,7 +188,7 @@ def send_response(email_id):
 
         logs.add_honeytoken_id(token, conv_id)
 
-        res = gmail.reply_to_email_with_attachment(email, response, path, token)
+        res = gmail.reply_to_email_with_attachment(email, response, path, sig_id)
 
     if res is not None and res['id'] and res['labelIds']:
         logs.add_to_log(conv_id, "me", response, datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z'))

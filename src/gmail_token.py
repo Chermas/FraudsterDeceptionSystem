@@ -1,7 +1,5 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
-import generatePDF as pdf
 import os
-import conversation_handler as ch
 
 def generate_refresh_token():
     """
@@ -27,26 +25,7 @@ def generate_refresh_token():
         token.write(creds.to_json())
     print("Refresh token saved.")
 
-
-def generate_pdf():
-    context = "Hello James, some important information has come up on the investment opportunity we discussed. I will need some information from you"
-    title = "Test Title"
-    subtitle = "Test Subtitle"
-    section = "Test Section"
-    token = 'test_token'
-
-    pdf.generate_pdf(token, context, title, subtitle, section)
-
-def test_queue():
-    ch.add_email_to_queue('test_id')
-    ch.dequeue_email()
-
 # Run this script once to create token.json
-# generate_refresh_token()
+generate_refresh_token()
 
-# Generate a sample PDF
-generate_pdf()
-
-# Test the email queue  
-# test_queue()
 

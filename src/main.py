@@ -28,12 +28,6 @@ def start_conversation():
     else:
         return jsonify({"error": "Missing email or subject"}), 400
 
-@app.route('/status', methods=['GET'])
-def status():
-    """API endpoint to check the system status."""
-    status_info = conversation_handler.get_status()
-    return jsonify(status_info), 200
-
 @app.route('/send_first_email', methods=['POST'])
 def send_first_email():
     """API endpoint to send the first email in a conversation."""
@@ -83,4 +77,4 @@ send_thread.start()
 
 # Run the Flask app in the main thread
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8005)
+    app.run(host='127.0.0.1', port=8005)

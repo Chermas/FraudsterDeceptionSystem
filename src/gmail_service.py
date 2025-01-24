@@ -57,13 +57,53 @@ class GmailService:
         
         service = build('gmail', 'v1', credentials=creds)
         return service
+    
+    def append_signature(self, body, token):
+        """
+        Appends the signature to the email body while preserving its formatting.
+        
+        Args:
+            body (str): The email body.
+            token (str): The token to include in the signature URL.
+        
+        Returns:
+            str: The email body with the signature appended, preserving formatting.
+        """
+        # Convert body text to HTML, preserving line breaks
+        formatted_body = body.replace("\n", "<br>")
+        
+        # Signature HTML
+        signature = f"""
+        <br><br>
+        --<br>
+        James R Dawson<br>
+        Colorado<br>
+        <a href="http://server.jdawsontech.com/{token}" target="_blank">jdawsontech.com</a>
+        """
+        
+        return f"{formatted_body}{signature}"
 
+    def create_message(self, to, subject, message_text, token):
+        """
+        Create an email message without attachments and include a clickable signature.
+        
+        Args:
+            to (str): Recipient email address.
+            subject (str): Email subject.
+            message_text (str): The email body text.
+            token (str): The token to include in the signature URL.
+        
+        Returns:
+            dict: A dictionary containing the base64-encoded email message.
+        """
+        # Append the signature with the clickable token
+        full_message = self.append_signature(message_text, token)
 
-    def create_message(self, to, subject, message_text):
-        """Create an email message without attachments."""
-        message = MIMEText(message_text)
+        # Create the email as HTML to support clickable links
+        message = MIMEText(full_message, 'html')  # 'html' ensures the link is clickable
         message['to'] = to
         message['subject'] = subject
+
         # Encode the message in base64 format
         raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
         return {'raw': raw_message}
@@ -108,12 +148,12 @@ class GmailService:
             print(f'An error occurred: {error}')
             return None
 
-    def send_email(self, to, subject, message_text, attachment_file=None):
+    def send_email(self, to, subject, message_text, token, attachment_file=None):
         """Send an email with or without an attachment."""
         if attachment_file:
             message = self.create_message_with_attachment(to, subject, message_text, attachment_file)
         else:
-            message = self.create_message(to, subject, message_text)
+            message = self.create_message(to, subject, message_text, token)
         return self.send_message('me', message)
 
     def list_messages(self, user_id='me', query=''):
@@ -258,13 +298,14 @@ class GmailService:
             return None
 
     # Include the reply_to_message function as defined previously
-    def reply_to_email(self, email, response_text):
+    def reply_to_email(self, email, response_text, token=None):
         """
         Reply to an existing email message in the same thread and mark it as read if successful.
         
         Args:
             email: Dictionary containing the email details, including "id".
             response_text: The text content for the reply.
+            token: Optional token to include in the signature as a clickable link.
             
         Returns:
             The response from the Gmail API if successful, otherwise None.
@@ -281,15 +322,20 @@ class GmailService:
                 print("Error: 'From' email address not found in the original message.")
                 return None
             
+            # Mark email as read
             res = self.mark_as_read('me', email['id'])
             if res == -1:
                 print("Failed to mark the email as read.")
                 return None
             
+            # Add the signature with a clickable link if the token is provided
+            if token:
+                response_text = self.append_signature(response_text, token)
+
             subject = "Re: " + headers.get('Subject', '')
 
-            # Create the reply message
-            reply_message = MIMEText(response_text)
+            # Create the reply message in HTML format
+            reply_message = MIMEText(response_text, 'html')  # 'html' ensures the signature link works as intended
             reply_message['to'] = from_email
             reply_message['subject'] = subject
             reply_message['In-Reply-To'] = message_id_header
@@ -304,24 +350,23 @@ class GmailService:
                 body={'raw': raw_message, 'threadId': thread_id}
             ).execute()
 
-            print(f'Reply sent successfully! Message Id: {send_response}')
+            print(f"Reply sent successfully! Message Id: {send_response}")
 
             return send_response
         except Exception as error:
-            print(f'An error occurred: {error}')
+            print(f"An error occurred: {error}")
             return None
         
-    def reply_to_email_with_attachment(self, email, response_text, attachment_path, honeytoken_id):
+    def reply_to_email_with_attachment(self, email, response_text, attachment_path, token=None):
         """
-        Reply to an existing email message in the same thread with an attachment and a hyperlink.
-        
+        Reply to an existing email message in the same thread with an attachment and a clickable signature.
+
         Args:
             email: Dictionary containing the email details, including "id".
             response_text: The text content for the reply.
             attachment_path: The file path of the attachment to include.
-            link_text: The display text for the hyperlink.
-            link_url: The URL for the hyperlink.
-        
+            token: Optional token to include in the signature as a clickable link.
+
         Returns:
             The response from the Gmail API if successful, otherwise None.
         """
@@ -337,26 +382,28 @@ class GmailService:
                 print("Error: 'From' email address not found in the original message.")
                 return None
             
+            # Mark email as read
+            res = self.mark_as_read('me', email['id'])
+            if res == -1:
+                print("Failed to mark the email as read.")
+                return None
+
+            # Add the signature with a clickable link if the token is provided
+            if token:
+                response_text = self.append_signature(response_text, token)
+
             subject = "Re: " + headers.get('Subject', '')
 
-            # Create the reply message with attachment
+            # Create a multipart email message to include both HTML body and attachment
             reply_message = MIMEMultipart()
             reply_message['to'] = from_email
             reply_message['subject'] = subject
             reply_message['In-Reply-To'] = message_id_header
             reply_message['References'] = message_id_header
 
-            # Attach the email body with a hyperlink
-            html_body = f"""
-            <html>
-                <body>
-                    <p>{response_text}</p>
-                    <p><a href="http://167.235.242.47:5000/{honeytoken_id}" target="_blank">More information</a></p>
-                </body>
-            </html>
-            """
-            reply_body = MIMEText(html_body, 'html')
-            reply_message.attach(reply_body)
+            # Attach the email body (HTML format with signature)
+            body_part = MIMEText(response_text, 'html')
+            reply_message.attach(body_part)
 
             # Attach the file
             content_type, encoding = mimetypes.guess_type(attachment_path)
@@ -372,7 +419,7 @@ class GmailService:
             attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(attachment_path))
             reply_message.attach(attachment)
 
-            # Encode the reply message
+            # Encode the message
             raw_message = base64.urlsafe_b64encode(reply_message.as_bytes()).decode()
 
             # Send the reply within the original thread
@@ -381,10 +428,10 @@ class GmailService:
                 body={'raw': raw_message, 'threadId': thread_id}
             ).execute()
 
-            print(f"Reply with attachment and hyperlink sent successfully! Message Id: {send_response['id']}")
+            print(f"Reply with attachment and signature sent successfully! Message Id: {send_response['id']}")
             return send_response
         except Exception as error:
-            print(f'An error occurred while sending the reply with attachment and hyperlink: {error}')
+            print(f"An error occurred while sending the reply with attachment and signature: {error}")
             return None
 
 

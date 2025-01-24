@@ -24,8 +24,6 @@ def update_url(token, name):
     path='templates/template.pdf'
     pdf = Pdf.open(path)
     Page(pdf.pages[0]).obj['/AA']['/O']['/URI'] = address + '/' + token
-
-    # Save the modified PDF
     pdf.save('../pdf_files/' + name + '.pdf')
 
 def insert_text(name, body, title, subTitle, section, token):
@@ -36,39 +34,32 @@ def insert_text(name, body, title, subTitle, section, token):
     PAGE_WIDTH = defaultPageSize[0]
     PAGE_HEIGHT = defaultPageSize[1]
 
-    # Title
-    text_width = stringWidth(title, "Helvetica-Bold", 28)
-    can.setFillColorRGB(255, 255, 255)
-    can.setFont("Helvetica-Bold", 28)
+    text_width = stringWidth(title,"Helvetica-Bold",28)
+    can.setFillColorRGB(255,255,255)
+    can.setFont("Helvetica-Bold",28)
     can.drawString((PAGE_WIDTH - text_width) / 2.0, 745, title)
 
-    # Subtitle
-    can.setFont("Helvetica-Oblique", 22)
-    text_width = stringWidth(subTitle, "Helvetica-Oblique", 22)
+    can.setFont("Helvetica-Oblique",22)
+    text_width = stringWidth(subTitle,"Helvetica-Oblique",22)
     can.drawString((PAGE_WIDTH - text_width) / 2.0, 690, subTitle)
 
-    # Section Header
-    can.setFillColorRGB(0, 0, 0)
-    can.setFont("Helvetica-Bold", 18)
+    can.setFillColorRGB(0,0,0)
+    can.setFont("Helvetica-Bold",18)
     can.drawString(40, 615, section)
 
-    # Section Divider Line
-    can.line(40, 605, PAGE_WIDTH - 40, 605)
+    can.line(40,605,PAGE_WIDTH-40,605)
 
-    # Body Text
-    can.setFont("Helvetica", 12)
+    can.setFont("Helvetica",12)
     L = simpleSplit(response, can._fontname, can._fontsize, PAGE_WIDTH - 80)
-    x = 40
-    y = 580
+    x=40
+    y=580
     for t in L:
-        can.drawString(x, y, t)
+        can.drawString(x,y,t)
         y -= can._leading
 
-    # Finalize the canvas
     can.save()
     packet.seek(0)
 
-    # Overlay the new content onto the PDF
     token_pdf = Pdf.open('../pdf_files/' + name + '.pdf', allow_overwriting_input=True)
     text_pdf = Pdf.open(packet)
     token_pdf_page = Page(token_pdf.pages[0])

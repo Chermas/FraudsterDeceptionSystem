@@ -8,3 +8,11 @@ src/response_queue.json
 pdf_files/*
 Dockerfile
 docker-compose.yaml
+jdawsontech.com
+interaction.py
+ne*
+test.py
+system_analysis.py
+send_commands.py
+*.txt
+useragent.py
